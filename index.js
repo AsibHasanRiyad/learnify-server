@@ -28,8 +28,10 @@ async function run() {
     const assignmentCollection = client
       .db("Learnify")
       .collection("allAssignment");
-    
-    const submittedAssignmentCollection = client.db('Learnify').collection('submittedAssignment')
+
+    const submittedAssignmentCollection = client
+      .db("Learnify")
+      .collection("submittedAssignment");
 
     //receive data from client side
     app.post("/assignments", async (req, res) => {
@@ -91,28 +93,79 @@ async function run() {
       res.send(result);
     });
 
-
     //submitted Assignment
-        //receive data from client side
-        app.post("/submittedAssignments", async (req, res) => {
-            const submittedAssignment = req.body;
-            console.log("data received from client", submittedAssignment);
-            const result = await submittedAssignmentCollection.insertOne(submittedAssignment);
-            // console.log(result);
-            res.send(result);
-          });
-      
-          //get data
-          app.get("/submittedAssignments", async (req, res) => {
-            console.log(req.query.submittedBy);
-            let query = {};
-            if (req.query?.submittedBy) {
-                query ={submittedBy :req.query.submittedBy}
-            }
-            const cursor = submittedAssignmentCollection.find(query);
-            const result = await cursor.toArray();
-            res.send(result);
-          });
+    //receive data from client side
+    app.post("/submittedAssignments", async (req, res) => {
+      const submittedAssignment = req.body;
+      console.log("data received from client", submittedAssignment);
+      const result = await submittedAssignmentCollection.insertOne(
+        submittedAssignment
+      );
+      // console.log(result);
+      res.send(result);
+    });
+
+    //get data
+    app.get("/submittedAssignments", async (req, res) => {
+      console.log(req.query.submittedBy);
+      let query = {};
+      if (req.query?.submittedBy) {
+        query = { submittedBy: req.query.submittedBy };
+      }
+      const cursor = submittedAssignmentCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    //give marks
+    app.get("/submittedAssignments/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await submittedAssignmentCollection.findOne(query);
+      res.send(result);
+    });
+
+    // app.put("/submittedAssignments/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const filter = { _id: new ObjectId(id) };
+    //   const options = { upsert: true };
+    //   const data = req.body;
+    // //   console.log(data);
+    //   const updateDetails = {
+    //     $set: {
+    //       obtainedMarks: data.obtainedMarks,
+    //       feedback: data.feedback,
+    //     },
+    //   };
+    //   console.log(updateDetails);
+    //   const result = await assignmentCollection.updateOne(
+    //     filter,
+    //     updateDetails,
+    //     options
+    //   );
+    //   res.send(result);
+    // });
+    app.put("/submittedAssignments/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const data = req.body;
+      console.log(data);
+      const updateDetails = {
+        $set: {
+          obtainedMarks: data.obtainedMarks,
+          feedback: data.feedback,
+          status: data.status
+        },
+      };
+      console.log(updateDetails);
+      const result = await submittedAssignmentCollection.updateOne(
+        filter,
+        updateDetails,
+        options
+      );
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
