@@ -104,7 +104,12 @@ async function run() {
       
           //get data
           app.get("/submittedAssignments", async (req, res) => {
-            const cursor = submittedAssignmentCollection.find();
+            console.log(req.query.submittedBy);
+            let query = {};
+            if (req.query?.submittedBy) {
+                query ={submittedBy :req.query.submittedBy}
+            }
+            const cursor = submittedAssignmentCollection.find(query);
             const result = await cursor.toArray();
             res.send(result);
           });
