@@ -159,11 +159,11 @@ async function run() {
 
     //get data
     app.get("/submittedAssignments",verifyToken, async (req, res) => {
-      console.log(req.query.submittedBy);
+      console.log('querrryyyyy',req.query.submittedBy, req.query.all);
     console.log('Verify token user', req.user.email);
-    if (req.query.submittedBy !== req.user?.email) {
-        return res.status(403).send({Message:'Forbidden Access'})
-    }
+    // if (req.query.submittedBy !== req.user?.email) {
+    //     return res.status(403).send({Message:'Forbidden Access'})
+    // }
       let query = {};
       if (req.query?.submittedBy) {
         query = { submittedBy: req.query.submittedBy };
