@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const jwt = require("jsonwebtoken")
+const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
@@ -8,52 +8,55 @@ const app = express();
 const port = process.env.PORT || 5001;
 
 //middleware
-app.use(cors({
-    origin:['http://localhost:5173'],
-    credentials: true
-}));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://learnify-20090.web.app",
+      "https://learnify-20090.firebaseapp.com",
+    ],
+    credentials: true,
+  })
+);
 app.use(express.json());
-app.use(cookieParser())
+app.use(cookieParser());
 
 //created middleware
-const verifyToken = (req, res, next) =>{
-    const token = req?.cookies?.token;
-    console.log('token in the middleware', token);
-    if (!token) {
-        return res.status(401).send({message:'Unauthorized Access'})
+const verifyToken = (req, res, next) => {
+  const token = req?.cookies?.token;
+  console.log("token in the middleware", token);
+  if (!token) {
+    return res.status(401).send({ message: "Unauthorized Access" });
+  }
+  jwt.verify(token, process.env.SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: "Unauthorized Access....." });
     }
-    jwt.verify(token, process.env.SECRET, (err, decoded) =>{
-        if (err) {
-            return res.status(401).send({message:'Unauthorized Access.....'})
-        }
-        req.user = decoded
-        next()
+    req.user = decoded;
+    next();
+  });
+};
+
+//jwt related api
+
+app.post("/jwt", async (req, res) => {
+  const user = req.body;
+  // console.log(user);
+  const token = jwt.sign(user, process.env.SECRET, { expiresIn: "1h" });
+  res
+    .cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production" ? true : false,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
     })
-}
+    .send({ Success: "True" });
+});
 
-
-
-    //jwt related api
-
-    app.post('/jwt', async(req, res) =>{
-        const user = req.body;
-        // console.log(user);
-        const token = jwt.sign(user, process.env.SECRET, {expiresIn:'1h'})
-        res
-        .cookie('token',token,{
-            httpOnly: true,
-            secure:true,
-            sameSite:'none'
-        })
-        .send({Success: 'True'})
-    })
-
-    app.post('/logout', async(req, res) =>{
-        const user = req.body;
-        console.log('logging out', user);
-        res.clearCookie('token',{maxAge:0})
-        .send({Success:'True'})
-    })
+app.post("/logout", async (req, res) => {
+  const user = req.body;
+  console.log("logging out", user);
+  res.clearCookie("token", { maxAge: 0 }).send({ Success: "True" });
+});
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.2x6r8lz.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -82,7 +85,7 @@ async function run() {
     //receive data from client side
     app.post("/assignments", async (req, res) => {
       const newAssignment = req.body;
-    //   console.log("data received from client", newAssignment);
+      //   console.log("data received from client", newAssignment);
       const result = await assignmentCollection.insertOne(newAssignment);
       // console.log(result);
       res.send(result);
@@ -90,10 +93,10 @@ async function run() {
 
     //get data
     app.get("/assignments", async (req, res) => {
-        // console.log(req.query);
-        // if (condition) {
-            
-        // }
+      // console.log(req.query);
+      // if (condition) {
+
+      // }
       const cursor = assignmentCollection.find();
       const result = await cursor.toArray();
       res.send(result);
@@ -102,12 +105,12 @@ async function run() {
     //delete assignments
     app.delete("/assignments/:id", async (req, res) => {
       const id = req.params.id;
-    //   console.log(id);
+      //   console.log(id);
       const query = {
         _id: new ObjectId(id),
       };
       const result = await assignmentCollection.deleteOne(query);
-    //   console.log(result);
+      //   console.log(result);
       res.send(result);
     });
 
@@ -124,7 +127,7 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const data = req.body;
-    //   console.log(data);
+      //   console.log(data);
       const updateDetails = {
         $set: {
           title: data.title,
@@ -145,11 +148,10 @@ async function run() {
 
     //submitted Assignment related api
 
-
     //receive data from client side
     app.post("/submittedAssignments", async (req, res) => {
       const submittedAssignment = req.body;
-    //   console.log("data received from client", submittedAssignment);
+      //   console.log("data received from client", submittedAssignment);
       const result = await submittedAssignmentCollection.insertOne(
         submittedAssignment
       );
@@ -158,12 +160,12 @@ async function run() {
     });
 
     //get data
-    app.get("/submittedAssignments",verifyToken, async (req, res) => {
-      console.log('querrryyyyy',req.query.submittedBy, req.query.all);
-    console.log('Verify token user', req.user.email);
-    // if (req.query.submittedBy !== req.user?.email) {
-    //     return res.status(403).send({Message:'Forbidden Access'})
-    // }
+    app.get("/submittedAssignments", verifyToken, async (req, res) => {
+      console.log("querrryyyyy", req.query.submittedBy, req.query.all);
+      console.log("Verify token user", req.user.email);
+      // if (req.query.submittedBy !== req.user?.email) {
+      //     return res.status(403).send({Message:'Forbidden Access'})
+      // }
       let query = {};
       if (req.query?.submittedBy) {
         query = { submittedBy: req.query.submittedBy };
@@ -181,21 +183,20 @@ async function run() {
       res.send(result);
     });
 
-
     app.put("/submittedAssignments/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const data = req.body;
-    //   console.log(data);
+      //   console.log(data);
       const updateDetails = {
         $set: {
           obtainedMarks: data.obtainedMarks,
           feedback: data.feedback,
-          status: data.status
+          status: data.status,
         },
       };
-    //   console.log(updateDetails);
+      //   console.log(updateDetails);
       const result = await submittedAssignmentCollection.updateOne(
         filter,
         updateDetails,
@@ -203,9 +204,6 @@ async function run() {
       );
       res.send(result);
     });
-
-
-
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
