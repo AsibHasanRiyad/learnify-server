@@ -91,14 +91,26 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/assignmentsCount', async(req, res) =>{
+        const count = await assignmentCollection.estimatedDocumentCount()
+        res.send({count})
+    })
+
     //get data
     app.get("/assignments", async (req, res) => {
       // console.log(req.query);
       // if (condition) {
 
       // }
-      const cursor = assignmentCollection.find();
-      const result = await cursor.toArray();
+      const page = parseInt(req.query.page)
+      const size = parseInt(req.query.size)
+      console.log('pagination',page, size);
+    //   const cursor = assignmentCollection.find()
+    //   const result = await cursor.toArray();
+      const result = await assignmentCollection.find()
+      .skip(page * size)
+      .limit(size)
+      .toArray();
       res.send(result);
     });
 
